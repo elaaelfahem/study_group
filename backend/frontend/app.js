@@ -53,6 +53,11 @@ const elements = {
     tips: document.querySelectorAll('.tip')
 };
 
+
+// ── Import HeyGen SDK (UMD script added to index.html) ─────────────
+let avatarManager = null;
+let currentAvatarSessionInfo = null;
+
 // ── Initialization ──────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
     initEvents();
@@ -148,12 +153,12 @@ async function processResponses(responses) {
         await new Promise(r => setTimeout(r, 600));
         addMessage(personaId, resp.text);
 
-        // D-ID Animation
+        // HeyGen Animation (FaceTime logic)
         if (state.isVoiceEnabled) {
             try {
                 await animateAvatar(resp.text, personaId);
             } catch (e) {
-                console.warn("D-ID Animation failed", e);
+                console.warn("HeyGen Animation failed", e);
                 await playVoice(resp.text, personaId);
             }
         } else {
@@ -165,7 +170,7 @@ async function processResponses(responses) {
 }
 
 function highlightSpeaker(personaId) {
-    // Spotlight the current speaker by making their cell larger (FaceTime style)
+    // Spotlight the current speaker by making their cell larger
     document.querySelectorAll('.video-cell').forEach(cell => {
         cell.classList.remove('spotlight');
     });
@@ -182,120 +187,86 @@ async function startUserCamera() {
     }
 }
 
-// ── D-ID Streaming Logic ─────────────────────────────────────────────
+// ── HeyGen Streaming (LiveAvatar) Logic ──────────────────────────────
 
 async function animateAvatar(text, personaId) {
-    const persona = state.personas[personaId];
+    // Note: LiveAvatar uses specific Avatar IDs. For the hackathon, we'll map 
+    // the persona to a specific stock HeyGen Avatar ID.
+    const avatarIdMap = {
+        genius: "Wayne_20240711",
+        confused: "Anna_public_3_20240108",
+        skeptic: "Eric_public_pro2_20230608",
+        summarizer: "Susan_public_2_20240128",
+        quiz_master: "Tyler-incasual-20220721",
+        organizer: "Gia-front-casual-20220818"
+    };
+    const avatarId = avatarIdMap[personaId] || "Wayne_20240711";
     
-    // 1. Connect or re-use stream
-    if (!state.did.peerConnection || state.did.peerConnection.connectionState === 'closed') {
-        await connectDID(persona.image, personaId);
+    // Connect to the specific avatar if not connected
+    if (!avatarManager || !currentAvatarSessionInfo || currentAvatarSessionInfo.avatarId !== avatarId) {
+        await connectAvatar(avatarId, personaId);
     }
 
-    // 2. Request Talk (Lip-sync trigger) via backend proxy to avoid CORS
-    const talkResponse = await fetch(`/avatar/talk?stream_id=${state.did.streamId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            script: {
-                type: 'text',
-                subtitles: 'false',
-                provider: { type: 'microsoft', voice_id: getVoiceId(personaId) },
-                input: text
-            },
-            config: { fluent: true, pad_audio: '0.0' },
-            session_id: state.did.sessionId
-        })
+    console.log(`Commanding ${personaId} to speak...`);
+    
+    // Command the Avatar to speak
+    await avatarManager.speak({
+        text: text,
+        taskType: 'repeat' // Repeat the given text exactly
     });
 
-    if (!talkResponse.ok) {
-        const err = await talkResponse.text();
-        console.error("D-ID Talk Error:", err);
-        throw new Error("D-ID Talk Request Failed");
-    }
-
-    // Wait for the video to start playing before proceeding to next persona
-    return new Promise((resolve) => {
-        const video = document.getElementById(`video-${personaId}`);
-        const onEnded = () => {
-            video.removeEventListener('ended', onEnded);
-            resolve();
-        };
-        video.addEventListener('ended', onEnded);
-        
-        // Safety timeout if video doesn't end properly
-        setTimeout(resolve, 10000);
-    });
+    // Wait roughly the duration of the speech so the next agent doesn't interrupt too early
+    // (A better way is listening for the avatar_stop_talking event, but this is a solid fallback)
+    const estimatedDuration = (text.split(' ').length / 2.5) * 1000 + 1000; 
+    await new Promise(r => setTimeout(r, estimatedDuration));
 }
 
-async function connectDID(imageUrl, personaId) {
-    console.log(`Connecting D-ID for ${personaId}...`);
+async function connectAvatar(avatarId, personaId) {
+    console.log(`Connecting LiveAvatar SDK for ${personaId} (${avatarId})...`);
+
+    // 1. Get Access Token from our backend proxy
+    const response = await fetch('/avatar/token', { method: 'POST' });
+    const data = await response.json();
+    const token = data.token;
+
+    // 2. Initialize HeyGen StreamingAvatar
+    if (avatarManager) {
+        try { await avatarManager.stopAvatar(); } catch (e) { }
+    }
     
-    const sessionResponse = await fetch('/avatar/stream', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ source_url: imageUrl })
-    });
-    const session = await sessionResponse.json();
-    
-    const { id: streamId, offer, ice_servers: iceServers, session_id: sessionId } = session;
-    state.did.streamId = streamId;
-    state.did.sessionId = sessionId;
+    avatarManager = new window.StreamingAvatarApi.StreamingAvatar({ token: token });
 
-    // WebRTC Setup
-    const peerConnection = new RTCPeerConnection({ iceServers });
-    state.did.peerConnection = peerConnection;
-
-    peerConnection.onicecandidate = (event) => {
-        if (event.candidate) {
-            fetch(`/avatar/ice?stream_id=${streamId}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(event.candidate.toJSON())
-            });
-        }
-    };
-
-    peerConnection.ontrack = (event) => {
+    // 3. Listen for Video Stream Event
+    avatarManager.on('streamReady', (event) => {
         const remoteVideo = document.getElementById(`video-${personaId}`);
-        if (event.track.kind === 'video' && remoteVideo) {
-            remoteVideo.srcObject = event.streams[0];
+        if (remoteVideo) {
+            remoteVideo.srcObject = event.detail;
             remoteVideo.classList.remove('hidden');
-            state.did.lastVideoState = 'active';
+            remoteVideo.play().catch(console.error);
             
             // Hide the static placeholder image
             const cell = document.getElementById(`cell-${personaId}`);
             if (cell) cell.querySelector('.video-placeholder').style.opacity = '0';
         }
-    };
-
-    peerConnection.onconnectionstatechange = () => {
-        console.log("D-ID Connection State:", peerConnection.connectionState);
-    };
-
-    // Set Remote Offer and Create Answer
-    await peerConnection.setRemoteDescription(offer);
-    const answer = await peerConnection.createAnswer();
-    await peerConnection.setLocalDescription(answer);
-
-    // Send Answer back to D-ID
-    await fetch(`/avatar/offer?stream_id=${streamId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ answer })
     });
-}
 
-function getVoiceId(personaId) {
-    const voices = {
-        genius: "en-US-GuyNeural",
-        confused: "en-US-JennyNeural",
-        skeptic: "en-US-DavisNeural",
-        summarizer: "en-US-AriaNeural",
-        quiz_master: "en-US-ChristopherNeural",
-        organizer: "en-US-SaraNeural"
-    };
-    return voices[personaId] || "en-US-GuyNeural";
+    avatarManager.on('streamDisconnected', () => {
+        console.log('Stream disconnected');
+    });
+
+    // 4. Start the Avatar Session
+    currentAvatarSessionInfo = await avatarManager.createStartAvatar({
+        quality: "low", // Keep response time fast for hackathon
+        avatarName: avatarId,
+        voice: {
+            // Using standard ElevenLabs or Microsoft voices is mapped automatically if not specified, 
+            // but we can specify the rate.
+            rate: 1.0
+        }
+    });
+    
+    currentAvatarSessionInfo.avatarId = avatarId;
+    console.log("Avatar connected!", currentAvatarSessionInfo);
 }
 
 function addMessage(speaker, text) {
