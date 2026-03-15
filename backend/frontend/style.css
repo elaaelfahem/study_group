@@ -38,6 +38,7 @@
     --c-confused:    #f59e0b;
     --c-skeptic:     #ef4444;
     --c-quiz_master: #a855f7;
+    --c-organizer:   #06b6d4;
 }
 
 /* ── Light Mode Tokens ────────────────────────────────────── */
@@ -404,6 +405,11 @@ html, body {
 #char-summarizer .char-img  { border-color: rgba(34,197,94,0.4); }
 #char-quiz_master .char-glow{ background: radial-gradient(circle, var(--c-quiz_master) 0%, transparent 65%); }
 #char-quiz_master .char-img { border-color: rgba(168,85,247,0.4); }
+#char-organizer .char-glow  { background: radial-gradient(circle, var(--c-organizer) 0%, transparent 65%); }
+#char-organizer .char-img   { 
+    border-color: rgba(6,182,212,0.4); 
+    filter: hue-rotate(220deg) brightness(1.1) saturate(1.2);
+}
 
 /* ── You (Student) ─────────────────────────────────────────── */
 #char-you .char-glow { background: radial-gradient(circle, var(--accent) 0%, transparent 65%); }

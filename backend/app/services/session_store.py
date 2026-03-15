@@ -2,7 +2,7 @@
 In-memory session state store.
 
 Tracks per-session data like turn count, topic, and mode so that
-features like Pomodoro timers can work.
+features like Organizer persona triggering and Pomodoro timers can work.
 
 NOTE: This is ephemeral — sessions are lost on server restart.
 For production, replace with Redis or a database.

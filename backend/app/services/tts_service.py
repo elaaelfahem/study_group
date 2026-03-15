@@ -9,6 +9,7 @@ PERSONA_VOICES = {
     "skeptic": "en-US-DavisNeural",
     "summarizer": "en-US-AriaNeural",
     "quiz_master": "en-US-ChristopherNeural",
+    "organizer": "en-US-SaraNeural",
 }
 
 

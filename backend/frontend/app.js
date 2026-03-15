@@ -8,12 +8,13 @@
 // ═══════════════════════════════════════════════════════════════
 
 const SEAT_POSITIONS = {
-    you:         { x: 45, y: 82 },
-    confused:    { x: 45, y: 16 },
-    genius:      { x: 12, y: 38 },
-    skeptic:     { x: 78, y: 38 },
-    summarizer:  { x: 18, y: 68 },
-    quiz_master: { x: 72, y: 68 },
+    you:         { x: 50, y: 82 },
+    summarizer:  { x: 20, y: 72 },
+    quiz_master: { x: 80, y: 72 },
+    genius:      { x: 10, y: 44 },
+    organizer:   { x: 90, y: 44 },
+    confused:    { x: 25, y: 16 },
+    skeptic:     { x: 75, y: 16 },
 };
 
 const PRESENTING_POS = { x: 45, y: 16 };
@@ -25,6 +26,7 @@ const PERSONA_CONFIG = {
     skeptic:     { name: "Marcus (Skeptic)",   emoji: "🔍", color: "#ff4757", voice: "sharp",    idleSpeed: 3.8 },
     summarizer:  { name: "Sarah (Summarizer)", emoji: "📝", color: "#2ed573", voice: "steady",   idleSpeed: 3.5 },
     quiz_master: { name: "Leo (Quiz Master)",  emoji: "🎯", color: "#a855f7", voice: "energetic",idleSpeed: 2.6 },
+    organizer:   { name: "Maya (Organizer)",   emoji: "📋", color: "#06b6d4", voice: "composed", idleSpeed: 3.0 },
 };
 
 const REACTIONS = [
@@ -43,6 +45,7 @@ const REACTION_WEIGHTS = {
     skeptic:     ['shake', 'think', 'question'],
     summarizer:  ['nod', 'agree', 'nod'],
     quiz_master: ['surprise', 'nod', 'agree'],
+    organizer:   ['nod', 'agree', 'nod'],
 };
 
 // ═══════════════════════════════════════════════════════════════
@@ -485,7 +488,7 @@ function initCharacters() {
 }
 
 async function animateRoomEntrance() {
-    const order = ['genius', 'confused', 'skeptic', 'summarizer', 'quiz_master'];
+    const order = ['genius', 'confused', 'skeptic', 'summarizer', 'quiz_master', 'organizer'];
     for (let i = 0; i < order.length; i++) {
         const char = state.characters[order[i]];
         await char.enter(i === 0 ? 400 : 300);
@@ -595,7 +598,7 @@ async function sendMessage() {
 
     } catch (error) {
         console.error("Chat Error:", error);
-        addMessage('summarizer', "Sorry, I had trouble connecting to the study brain. Is Ollama running?");
+        addMessage('organizer', "Sorry, I had trouble connecting to the study brain. Is Ollama running?");
         showLoading(false);
     } finally {
         state.isThinking = false;
@@ -824,12 +827,12 @@ function updatePomodoro() {
 
 function notifyPomodoroEnd() {
     const text = "Time's up! Great focus session. Let's take a 5-minute break. Stand up, stretch, get some water! 🥤";
-    addMessage('summarizer', text);
-    const char = state.characters['summarizer'];
+    addMessage('organizer', text);
+    const char = state.characters['organizer'];
     if (char) {
         char.react('nod');
         if (state.isVoiceEnabled) {
-            fetchTTSAudio(text, 'summarizer').then(url => char.speak(text, url)).catch(() => {});
+            fetchTTSAudio(text, 'organizer').then(url => char.speak(text, url)).catch(() => {});
         }
     }
 }
