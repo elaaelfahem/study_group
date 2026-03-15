@@ -4,17 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Study Group — Virtual Study Room</title>
-    <meta name="description" content="An AI-powered virtual study room with multiple AI personas that simulate a real collaborative study session.">
+    <meta name="description" content="An AI-powered virtual study room with interactive animated avatars that move, talk, and react in real-time.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/style.css">
-    <!-- HeyGen Streaming Avatar SDK -->
-    <script src="https://cdn.jsdelivr.net/npm/@heygen/streaming-avatar@1.0.3/dist/index.umd.js"></script>
 </head>
 <body>
     <div class="app">
-        <!-- ── Header ──────────────────────────────────────── -->
+        <!-- ── Header ── -->
         <header class="header">
             <div class="header-left">
                 <div class="logo">
@@ -32,6 +30,9 @@
                 </select>
             </div>
             <div class="header-right">
+                <button id="themeToggle" class="theme-toggle" title="Toggle Light/Dark Mode">
+                    <span class="theme-icon">🌙</span>
+                </button>
                 <button id="voiceToggle" class="voice-toggle active" title="Toggle AI voices">
                     <span class="voice-icon">🔊</span>
                 </button>
@@ -48,112 +49,129 @@
             </div>
         </header>
 
-        <!-- ── Main Content: FaceTime Style ── -->
-        <main class="main facetime-layout">
-            
-            <!-- Video Grid Area -->
-            <section class="video-grid-container">
-                <div class="video-grid" id="videoGrid">
-                    <!-- Participant: The Genius (Main Spotlight) -->
-                    <div class="video-cell spotlight" id="cell-genius" data-persona="genius">
-                        <div class="video-placeholder">
-                            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800" alt="Genius">
-                        </div>
-                        <video id="video-genius" class="did-video hidden" autoplay playsinline></video>
-                        <div class="participant-label">
-                            <span class="status-dot"></span>
-                            The Genius
-                        </div>
-                        <div class="typing-pill">🧠 Thinking...</div>
-                    </div>
+        <!-- ── Main Content ── -->
+        <main class="main-content">
 
-                    <!-- Participant: The Confused -->
-                    <div class="video-cell" id="cell-confused" data-persona="confused">
-                        <div class="video-placeholder">
-                            <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=600" alt="Confused">
-                        </div>
-                        <video id="video-confused" class="did-video hidden" autoplay playsinline></video>
-                        <div class="participant-label">
-                            <span class="status-dot"></span>
-                            The Confused
-                        </div>
-                        <div class="typing-pill">🤔 Thinking...</div>
-                    </div>
+            <!-- ── Virtual Study Room ── -->
+            <section class="virtual-room" id="virtualRoom">
+                <!-- Ambient Layer (Particles & Lighting) -->
+                <div class="ambient-layer" id="ambientLayer"></div>
+                <div class="volumetric-light"></div>
 
-                    <!-- Participant: The Skeptic -->
-                    <div class="video-cell" id="cell-skeptic" data-persona="skeptic">
-                        <div class="video-placeholder">
-                            <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=600" alt="Skeptic">
-                        </div>
-                        <video id="video-skeptic" class="did-video hidden" autoplay playsinline></video>
-                        <div class="participant-label">
-                            <span class="status-dot"></span>
-                            The Skeptic
-                        </div>
-                        <div class="typing-pill">🔍 Analyzing...</div>
-                    </div>
+                <!-- Room Floor -->
+                <div class="room-floor">
+                    <div class="floor-grid"></div>
+                    <div class="floor-glow"></div>
+                </div>
 
-                    <!-- Participant: The Summarizer -->
-                    <div class="video-cell" id="cell-summarizer" data-persona="summarizer">
-                        <div class="video-placeholder">
-                            <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=600" alt="Summarizer">
-                        </div>
-                        <video id="video-summarizer" class="did-video hidden" autoplay playsinline></video>
-                        <div class="participant-label">
-                            <span class="status-dot"></span>
-                            The Summarizer
-                        </div>
-                    </div>
-
-                    <!-- Participant: The Quiz Master -->
-                    <div class="video-cell" id="cell-quiz_master" data-persona="quiz_master">
-                        <div class="video-placeholder">
-                            <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=600" alt="Quiz Master">
-                        </div>
-                        <video id="video-quiz_master" class="did-video hidden" autoplay playsinline></video>
-                        <div class="participant-label">
-                            <span class="status-dot"></span>
-                            Quiz Master
-                        </div>
-                    </div>
-
-                    <!-- Participant: The Organizer -->
-                    <div class="video-cell" id="cell-organizer" data-persona="organizer">
-                        <div class="video-placeholder">
-                            <img src="https://images.unsplash.com/photo-1554151228-14d9def656e4?w=600" alt="Organizer">
-                        </div>
-                        <video id="video-organizer" class="did-video hidden" autoplay playsinline></video>
-                        <div class="participant-label">
-                            <span class="status-dot"></span>
-                            The Organizer
-                        </div>
-                    </div>
-
-                    <!-- Side Self Mirror -->
-                    <div class="video-cell self-view">
-                        <div class="video-placeholder user-placeholder">👤</div>
-                        <video id="userVideo" autoplay muted playsinline></video>
-                        <div class="participant-label">You (Student)</div>
+                <!-- Study Table -->
+                <div class="study-table">
+                    <div class="table-surface"></div>
+                    <div class="table-light"></div>
+                    <div class="table-topic-display">
+                        <span class="table-label">CURRENT TOPIC</span>
+                        <h2 class="table-topic" id="tableTopic">Photosynthesis</h2>
                     </div>
                 </div>
 
-                <!-- Floating Controls Overlay -->
-                <div class="facetime-controls">
-                    <button id="micBtn" class="control-btn mic-btn" title="Speak">🎙️</button>
-                    <button id="toggleChatBtn" class="control-btn toggle-chat-btn" title="Toggle Chat">💬</button>
-                    <button class="control-btn end-call-btn" title="End Session">🛑</button>
+                <!-- ── Characters (7-person circular layout) ── -->
+
+                <!-- You (the student) — bottom center of circle -->
+                <div class="character character-you" id="char-you" data-persona="you" style="left:50%;top:82%;">
+                    <div class="char-body">
+                        <div class="char-glow"></div>
+                        <div class="char-img char-img-video" id="selfCamCircle">
+                            <video id="userVideo" autoplay muted playsinline></video>
+                            <div class="self-placeholder">👤</div>
+                        </div>
+                    </div>
+                    <div class="char-plate"><span class="plate-dot plate-dot-you"></span><span>You</span><span class="plate-emoji">🎓</span></div>
+                    <div class="char-shadow"></div>
+                </div>
+
+                <!-- The Genius — left -->
+                <div class="character" id="char-genius" data-persona="genius" style="left:12%;top:38%;">
+                    <div class="char-reaction" id="reaction-genius"></div>
+                    <div class="char-speech" id="speech-genius">
+                        <p class="speech-text"></p>
+                    </div>
+                    <div class="char-body">
+                        <div class="char-glow"></div>
+                        <img class="char-img" src="/static/avatars/genius.png" alt="The Genius" draggable="false">
+                    </div>
+                    <div class="char-plate"><span class="plate-dot"></span><span>The Genius</span><span class="plate-emoji">🧠</span></div>
+                    <div class="char-shadow"></div>
+                </div>
+
+                <!-- The Confused — upper-left -->
+                <div class="character" id="char-confused" data-persona="confused" style="left:50%;top:16%;">
+                    <div class="char-reaction" id="reaction-confused"></div>
+                    <div class="char-speech" id="speech-confused">
+                        <p class="speech-text"></p>
+                    </div>
+                    <div class="char-body">
+                        <div class="char-glow"></div>
+                        <img class="char-img" src="/static/avatars/confused.png" alt="The Confused" draggable="false">
+                    </div>
+                    <div class="char-plate"><span class="plate-dot"></span><span>The Confused</span><span class="plate-emoji">🤔</span></div>
+                    <div class="char-shadow"></div>
+                </div>
+
+                <!-- The Skeptic — upper-right -->
+                <div class="character" id="char-skeptic" data-persona="skeptic" style="left:78%;top:38%;">
+                    <div class="char-reaction" id="reaction-skeptic"></div>
+                    <div class="char-speech" id="speech-skeptic">
+                        <p class="speech-text"></p>
+                    </div>
+                    <div class="char-body">
+                        <div class="char-glow"></div>
+                        <img class="char-img" src="/static/avatars/skeptic.png" alt="The Skeptic" draggable="false">
+                    </div>
+                    <div class="char-plate"><span class="plate-dot"></span><span>The Skeptic</span><span class="plate-emoji">🔍</span></div>
+                    <div class="char-shadow"></div>
+                </div>
+
+                <!-- The Summarizer — lower-left -->
+                <div class="character" id="char-summarizer" data-persona="summarizer" style="left:18%;top:68%;">
+                    <div class="char-reaction" id="reaction-summarizer"></div>
+                    <div class="char-speech" id="speech-summarizer">
+                        <p class="speech-text"></p>
+                    </div>
+                    <div class="char-body">
+                        <div class="char-glow"></div>
+                        <img class="char-img" src="/static/avatars/summarizer.png" alt="The Summarizer" draggable="false">
+                    </div>
+                    <div class="char-plate"><span class="plate-dot"></span><span>The Summarizer</span><span class="plate-emoji">📝</span></div>
+                    <div class="char-shadow"></div>
+                </div>
+
+                <!-- Quiz Master — lower-right -->
+                <div class="character" id="char-quiz_master" data-persona="quiz_master" style="left:72%;top:68%;">
+                    <div class="char-reaction" id="reaction-quiz_master"></div>
+                    <div class="char-speech" id="speech-quiz_master">
+                        <p class="speech-text"></p>
+                    </div>
+                    <div class="char-body">
+                        <div class="char-glow"></div>
+                        <img class="char-img" src="/static/avatars/quiz_master.png" alt="Quiz Master" draggable="false">
+                    </div>
+                    <div class="char-plate"><span class="plate-dot"></span><span>Quiz Master</span><span class="plate-emoji">🎯</span></div>
+                    <div class="char-shadow"></div>
+                </div>
+
+                <!-- Room Controls -->
+                <div class="room-controls">
+                    <button id="micBtn" class="ctrl-btn mic-btn" title="Hold to speak">🎙️</button>
+                    <button id="toggleChatBtn" class="ctrl-btn" title="Toggle Chat">💬</button>
+                    <button class="ctrl-btn end-btn" title="End Session">🛑</button>
                 </div>
             </section>
 
-            <!-- Side Panel: Chat & Info -->
+            <!-- ── Chat Panel ── -->
             <aside class="chat-panel" id="chatPanel">
-                <div class="chat-header">
-                    <h3>Group Chat</h3>
-                </div>
+                <div class="chat-header"><h3>Group Chat</h3></div>
                 <div class="messages" id="messages">
-                    <div class="welcome-message">
-                        <p>Welcome to the group session!</p>
-                    </div>
+                    <div class="system-msg join-msg">🧠 Study room is ready — say something to begin!</div>
                 </div>
                 <div class="chat-input-area">
                     <input type="text" id="userInput" placeholder="Type a message..." autocomplete="off">
@@ -165,8 +183,10 @@
 
     <!-- Loading overlay -->
     <div class="loading-overlay" id="loadingOverlay">
-        <div class="loading-dots">
-            <span></span><span></span><span></span>
+        <div class="loading-spinner">
+            <div class="spinner-ring"></div>
+            <div class="spinner-ring"></div>
+            <div class="spinner-ring"></div>
         </div>
         <p class="loading-text" id="loadingText">Study group is thinking...</p>
     </div>

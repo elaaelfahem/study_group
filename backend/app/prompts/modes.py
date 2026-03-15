@@ -16,6 +16,3 @@ MODE_BEHAVIOR = {
         "preferred_order_for_explanation": ["summarizer", "genius"],
     },
 }
-
-# After how many turns the Organizer should chime in
-ORGANIZER_TRIGGER_INTERVAL = 5

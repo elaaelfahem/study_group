@@ -19,4 +19,6 @@ async def speak(request: TTSRequest):
     """Generate speech audio for a given persona and text."""
     logger.info(f"TTS request for persona: {request.persona}")
     audio = await generate_speech(request.text, request.persona)
+    if not audio:
+        return Response(status_code=204)
     return Response(content=audio, media_type="audio/mpeg")

@@ -1,7 +1,7 @@
 import logging
 from app.config import settings
 from app.prompts.personas import SHARED_CONTEXT, PERSONAS
-from app.prompts.modes import MODE_BEHAVIOR, ORGANIZER_TRIGGER_INTERVAL
+from app.prompts.modes import MODE_BEHAVIOR
 from app.services.llm_service import call_ollama
 
 logger = logging.getLogger(__name__)
@@ -59,15 +59,6 @@ def choose_speakers(
         speakers = ["skeptic", "genius"][:max_turns]
     else:
         speakers = ["genius", "summarizer"][:max_turns]
-
-    # Inject the Organizer periodically to manage pacing and focus
-    if (
-        turn_count > 0
-        and turn_count % ORGANIZER_TRIGGER_INTERVAL == 0
-        and "organizer" not in speakers
-    ):
-        speakers.append("organizer")
-        logger.info(f"Organizer injected at turn {turn_count}")
 
     return speakers
 

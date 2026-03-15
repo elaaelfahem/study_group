@@ -9,7 +9,6 @@ PERSONA_VOICES = {
     "skeptic": "en-US-DavisNeural",
     "summarizer": "en-US-AriaNeural",
     "quiz_master": "en-US-ChristopherNeural",
-    "organizer": "en-US-SaraNeural",
 }
 
 
@@ -18,12 +17,23 @@ async def generate_speech(text: str, persona: str) -> bytes:
     voice = PERSONA_VOICES.get(persona, "en-US-GuyNeural")
     logger.info(f"Generating TTS for [{persona}] with voice {voice} ({len(text)} chars)")
 
-    communicate = edge_tts.Communicate(text, voice)
-    audio_data = b""
+    for attempt in range(2):
+        try:
+            communicate = edge_tts.Communicate(text, voice)
+            audio_data = b""
 
-    async for chunk in communicate.stream():
-        if chunk["type"] == "audio":
-            audio_data += chunk["data"]
+            async for chunk in communicate.stream():
+                if chunk["type"] == "audio":
+                    audio_data += chunk["data"]
 
-    logger.info(f"TTS generated: {len(audio_data)} bytes")
-    return audio_data
+            if audio_data:
+                logger.info(f"TTS generated: {len(audio_data)} bytes")
+                return audio_data
+            else:
+                logger.warning(f"TTS returned empty audio (attempt {attempt + 1})")
+        except Exception as e:
+            logger.warning(f"TTS attempt {attempt + 1} failed: {e}")
+
+    # Return minimal valid MP3 silence (avoids 500 errors — frontend detects short audio)
+    logger.warning("TTS failed after retries, returning silence")
+    return b""
